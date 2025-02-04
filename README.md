@@ -4,8 +4,8 @@ This is a repo for me to learn a bit about Rust in a web dev capacity
 
 ## TODO
 
-- [ ] Healthcheck endpoint
-- [ ] Fetch todays weather forcast for ballarat
+- [x] Healthcheck endpoint
+- [x] Fetch todays weather forcast for ballarat
 - [ ] Send a message via telgram
 - [ ] Wait until a specific time of day to fetch the information then send it otherwise wait
 - [ ] Send that forcast to Telagram or Signal each morning
