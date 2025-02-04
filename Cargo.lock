@@ -133,6 +133,13 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
+version = "0.1.0"
+dependencies = [
+ "actix-web 4.9.0",
+]
+
+[[package]]
+name = "actix-web"
 version = "4.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9180d76e5cc7ccbc4d60a506f2c727730b154010262df5b910eb17dbe4b8cb38"
@@ -235,13 +242,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
 dependencies = [
  "alloc-no-stdlib",
-]
-
-[[package]]
-name = "artix-web"
-version = "0.1.0"
-dependencies = [
- "actix-web",
 ]
 
 [[package]]
