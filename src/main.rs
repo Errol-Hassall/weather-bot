@@ -1,17 +1,14 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpServer};
+use health::health_check;
+use weather::weather_forcast;
 
-#[get("/health")]
-async fn health() -> impl Responder {
-    HttpResponse::Ok().body("Alive")
-}
+mod health;
+mod weather;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(health)
-    })
-    .bind(("127.0.0.1", 4000))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(health_check).service(weather_forcast))
+        .bind(("127.0.0.1", 4000))?
+        .run()
+        .await
 }
