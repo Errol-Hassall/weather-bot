@@ -47,6 +47,10 @@ impl Responder for WeatherForcast {
 
 #[get("/weather/weather-forcast")]
 pub async fn weather_forcast() -> Result<impl Responder> {
+    get_weather().await
+}
+
+pub async fn get_weather() -> Result<impl Responder> {
     let url = String::from("https://api.open-meteo.com/v1/forecast?latitude=-37.5662&longitude=143.8496&daily=temperature_2m_max,temperature_2m_min&timezone=Australia%2FSydney&forecast_days=1");
     let response: WeatherForcast = reqwest::get(url)
         .await
