@@ -1,0 +1,11 @@
+services:
+  weather-bot:
+    container_name: weather-bot
+    ports:
+      - 4111:4000
+    build:
+      context: .
+    environment:
+      - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+      - CHANNEL_ID=${CHANNEL_ID}
+    env_file: .env
