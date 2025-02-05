@@ -1,6 +1,6 @@
-# Rust Actix
+# Weather bot
 
-This is a repo for me to learn a bit about Rust in a web dev capacity
+This bot will send a message via telagram when the url is hit that gives you a forcast for the day. Note that lat long is a fake address and will be passed in the future.
 
 ## TODO
 
