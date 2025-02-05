@@ -133,22 +133,6 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "0.1.0"
-dependencies = [
- "actix-web 4.9.0",
- "chrono",
- "dotenv",
- "log",
- "pretty_env_logger",
- "reqwest 0.12.12",
- "serde",
- "serde_json",
- "teloxide",
- "tokio",
-]
-
-[[package]]
-name = "actix-web"
 version = "4.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9180d76e5cc7ccbc4d60a506f2c727730b154010262df5b910eb17dbe4b8cb38"
@@ -2640,6 +2624,22 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "weather-bot"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "dotenv",
+ "log",
+ "pretty_env_logger",
+ "reqwest 0.12.12",
+ "serde",
+ "serde_json",
+ "teloxide",
+ "tokio",
 ]
 
 [[package]]

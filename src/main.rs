@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::thread;
 
 use actix_web::{App, HttpServer};
 use health::health_check;
@@ -12,14 +12,12 @@ mod weather;
 async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env").ok();
 
-    thread::spawn(|| {
-        while true {
-            background_job::background_job();
-        }
+    thread::spawn(|| loop {
+        background_job::background_job();
     });
 
     HttpServer::new(|| App::new().service(health_check).service(weather_forcast))
-        .bind(("127.0.0.1", 4000))?
+        .bind(("0.0.0.0", 4000))?
         .run()
         .await
 }
