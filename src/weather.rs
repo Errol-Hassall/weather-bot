@@ -11,6 +11,7 @@ struct Daily {
     time: Vec<String>,
     temperature_2m_max: Vec<f32>,
     temperature_2m_min: Vec<f32>,
+    precipitation_probability_max: Vec<i32>,
 }
 
 impl Responder for Daily {
@@ -51,7 +52,7 @@ pub async fn weather_forcast() -> Result<impl Responder> {
 }
 
 pub async fn get_weather() -> Result<impl Responder> {
-    let url = String::from("https://api.open-meteo.com/v1/forecast?latitude=-37.5662&longitude=143.8496&daily=temperature_2m_max,temperature_2m_min&timezone=Australia%2FSydney&forecast_days=1");
+    let url = String::from("https://api.open-meteo.com/v1/forecast?latitude=-37.5662&longitude=143.8496&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=1");
     let response: WeatherForcast = reqwest::get(url)
         .await
         .unwrap()
@@ -70,8 +71,10 @@ async fn send_bot_message(weather: &WeatherForcast) -> teloxide::prelude::Messag
 
     let min = &weather.daily.temperature_2m_min[0];
     let max = &weather.daily.temperature_2m_max[0];
+    let chance_of_rain = &weather.daily.precipitation_probability_max[0];
 
-    let message = format!("Minimum temperature of {min} and a maximum of {max}");
+    let message =
+        format!("The weather today will be a minimum temperature of {min}C and a maximum of {max}C and a {chance_of_rain}% change of rain.");
 
     let response = bot
         .send_message(String::from(channel_id), message)
