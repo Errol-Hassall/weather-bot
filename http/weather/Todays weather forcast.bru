@@ -5,15 +5,13 @@ meta {
 }
 
 get {
-  url: http://127.0.0.1:4000/weather/weather-forcast
+  url: http://127.0.0.1:4000/weather/weather-forcast?lat=-37.5662&long=143.8496&timezone=Australia%2FSydney
   body: json
   auth: none
 }
 
-body:json {
-  {
-    "lat": -37.5662,
-    "long": 143.8496,
-    "timezone": "Australia%2FSydney"
-  }
+params:query {
+  lat: -37.5662
+  long: 143.8496
+  timezone: Australia%2FSydney
 }

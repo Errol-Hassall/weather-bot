@@ -54,17 +54,15 @@ struct WeatherForcastRequest {
 }
 
 #[get("/weather/weather-forcast")]
-pub async fn weather_forcast(req: web::Json<WeatherForcastRequest>) -> Result<impl Responder> {
-    get_weather(req).await
+pub async fn weather_forcast(req: web::Query<WeatherForcastRequest>) -> Result<impl Responder> {
+    let lat = req.lat;
+    let long = req.long;
+    let timezone = &req.timezone;
+
+    get_weather(lat, long, timezone).await
 }
 
-async fn get_weather(
-    weather_forcast_request: web::Json<WeatherForcastRequest>,
-) -> Result<impl Responder> {
-    let lat = weather_forcast_request.lat;
-    let long = weather_forcast_request.long;
-    let timezone = &weather_forcast_request.timezone;
-
+async fn get_weather(lat: f32, long: f32, timezone: &String) -> Result<impl Responder> {
     let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=1");
     let response: WeatherForcast = reqwest::get(url)
         .await
