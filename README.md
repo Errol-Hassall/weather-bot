@@ -7,7 +7,7 @@ This bot will send a message via telagram when the url is hit that gives you a f
 - [x] Healthcheck endpoint
 - [x] Fetch todays weather forcast for ballarat
 - [x] Send a message via telgram
-- [ ] Not a hardcoded url
+- [x] Not a hardcoded url
 - [x] Wait until a specific time of day to fetch the information then send it otherwise wait
 - [x] Send that forcast to Telagram or Signal each morning
 - [x] Endpoint that you can pass a location and it returns the forcast

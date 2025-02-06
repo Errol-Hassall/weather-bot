@@ -46,13 +46,26 @@ impl Responder for WeatherForcast {
     }
 }
 
-#[get("/weather/weather-forcast")]
-pub async fn weather_forcast() -> Result<impl Responder> {
-    get_weather().await
+#[derive(Debug, Deserialize)]
+struct WeatherForcastRequest {
+    lat: f32,
+    long: f32,
+    timezone: String,
 }
 
-pub async fn get_weather() -> Result<impl Responder> {
-    let url = String::from("https://api.open-meteo.com/v1/forecast?latitude=-37.5662&longitude=143.8496&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Australia%2FSydney&forecast_days=1");
+#[get("/weather/weather-forcast")]
+pub async fn weather_forcast(req: web::Json<WeatherForcastRequest>) -> Result<impl Responder> {
+    get_weather(req).await
+}
+
+async fn get_weather(
+    weather_forcast_request: web::Json<WeatherForcastRequest>,
+) -> Result<impl Responder> {
+    let lat = weather_forcast_request.lat;
+    let long = weather_forcast_request.long;
+    let timezone = &weather_forcast_request.timezone;
+
+    let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=1");
     let response: WeatherForcast = reqwest::get(url)
         .await
         .unwrap()
