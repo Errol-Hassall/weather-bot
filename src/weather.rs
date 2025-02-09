@@ -53,6 +53,27 @@ struct WeatherForcastRequest {
     timezone: String,
 }
 
+#[get("/weather/seven-day-forcast")]
+pub async fn seven_day_forcast(req: web::Query<WeatherForcastRequest>) -> Result<impl Responder> {
+    let lat = req.lat;
+    let long = req.long;
+    let timezone = &req.timezone;
+
+    get_seven_day_forcast(lat, long, timezone).await
+}
+
+async fn get_seven_day_forcast(lat: f32, long: f32, timezone: &String) -> Result<impl Responder> {
+    let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=7");
+    let response: WeatherForcast = reqwest::get(url)
+        .await
+        .unwrap()
+        .json::<WeatherForcast>()
+        .await
+        .unwrap();
+
+    Ok(web::Json(response))
+}
+
 #[get("/weather/weather-forcast")]
 pub async fn weather_forcast(req: web::Query<WeatherForcastRequest>) -> Result<impl Responder> {
     let lat = req.lat;
@@ -85,7 +106,7 @@ async fn send_bot_message(weather: &WeatherForcast) -> teloxide::prelude::Messag
     let chance_of_rain = &weather.daily.precipitation_probability_max[0];
 
     let message =
-        format!("The weather today will be a minimum temperature of {min}C and a maximum of {max}C and a {chance_of_rain}% change of rain.");
+        format!("The weather today will be a minimum temperature of {min}C and a maximum of {max}C and a {chance_of_rain}% chance of rain.");
 
     let response = bot
         .send_message(String::from(channel_id), message)
