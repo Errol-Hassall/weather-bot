@@ -9,8 +9,8 @@ use teloxide::{prelude::Requester, Bot};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct Daily {
     time: Vec<String>,
-    temperature_2m_max: Vec<f32>,
-    temperature_2m_min: Vec<f32>,
+    temperature_2m_max: Vec<f64>,
+    temperature_2m_min: Vec<f64>,
     precipitation_probability_max: Vec<i32>,
 }
 
@@ -28,7 +28,7 @@ impl Responder for Daily {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-struct WeatherForcast {
+pub struct WeatherForcast {
     daily: Daily,
 }
 
@@ -48,21 +48,45 @@ impl Responder for WeatherForcast {
 
 #[derive(Debug, Deserialize)]
 struct WeatherForcastRequest {
-    lat: f32,
-    long: f32,
+    lat: f64,
+    long: f64,
     timezone: String,
 }
 
-#[get("/weather/seven-day-forcast")]
-pub async fn seven_day_forcast(req: web::Query<WeatherForcastRequest>) -> Result<impl Responder> {
-    let lat = req.lat;
-    let long = req.long;
-    let timezone = &req.timezone;
-
-    get_seven_day_forcast(lat, long, timezone).await
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LocationResult {
+    id: u32,
+    name: String,
+    latitude: f64,
+    longitude: f64,
+    elevation: f32,
+    feature_code: String,
+    country_code: String,
+    admin1_id: u32,
+    timezone: String,
+    country_id: u32,
+    country: String,
+    admin1: String,
 }
 
-async fn get_seven_day_forcast(lat: f32, long: f32, timezone: &String) -> Result<impl Responder> {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LocationResponse {
+    results: Vec<LocationResult>,
+}
+
+pub async fn get_lat_long_for_location(location: String) -> (f64, f64) {
+    let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={location}&count=10&language=en&format=json");
+    let response: LocationResponse = reqwest::get(url)
+        .await
+        .unwrap()
+        .json::<LocationResponse>()
+        .await
+        .unwrap();
+
+    (response.results[0].latitude, response.results[0].longitude)
+}
+
+pub async fn get_seven_day_forcast(lat: f64, long: f64, timezone: &String) -> WeatherForcast {
     let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=7");
     let response: WeatherForcast = reqwest::get(url)
         .await
@@ -71,7 +95,26 @@ async fn get_seven_day_forcast(lat: f32, long: f32, timezone: &String) -> Result
         .await
         .unwrap();
 
-    Ok(web::Json(response))
+    response
+}
+
+pub fn format_weekly_forcast(forcast: &WeatherForcast) -> String {
+    let time = forcast.daily.time.clone();
+    let min = forcast.daily.temperature_2m_min.clone();
+    let max = forcast.daily.temperature_2m_max.clone();
+    let rain = forcast.daily.precipitation_probability_max.clone();
+
+    let mut message = "".to_string();
+
+    for i in 1..7 {
+        let t = &time[i];
+        let mn = &min[i];
+        let mx = &max[i];
+        let r = &rain[i];
+        message.push_str(&format!("date: {t} has a max temperature of {mx} and a low of {mn}. There is a {r}% chance of rain. \n"))
+    }
+
+    message
 }
 
 #[get("/weather/weather-forcast")]
@@ -83,7 +126,7 @@ pub async fn weather_forcast(req: web::Query<WeatherForcastRequest>) -> Result<i
     get_weather(lat, long, timezone).await
 }
 
-async fn get_weather(lat: f32, long: f32, timezone: &String) -> Result<impl Responder> {
+async fn get_weather(lat: f64, long: f64, timezone: &String) -> Result<impl Responder> {
     let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=1");
     let response: WeatherForcast = reqwest::get(url)
         .await

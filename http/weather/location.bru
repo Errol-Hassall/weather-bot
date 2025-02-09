@@ -1,0 +1,18 @@
+meta {
+  name: location
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://geocoding-api.open-meteo.com/v1/search?name=Ballarat&count=10&language=en&format=json
+  body: none
+  auth: none
+}
+
+params:query {
+  name: Ballarat
+  count: 10
+  language: en
+  format: json
+}
