@@ -16,3 +16,4 @@ This bot will send a message via telagram when the url is hit that gives you a f
 - [x] Host on my own server
 - [x] Send a message on telegram and get a response
 - [x] Send a message on telegram to return a forcast for the week
+- [ ] Seperate the controllers and the service code
