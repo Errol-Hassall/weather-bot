@@ -1,6 +1,9 @@
 use actix_web::{
-    body::BoxBody, get, http::header::ContentType, web, HttpRequest, HttpResponse, Responder,
-    Result,
+    body::BoxBody,
+    get,
+    http::header::ContentType,
+    web::{self},
+    HttpRequest, HttpResponse, Responder, Result,
 };
 
 use serde::{Deserialize, Serialize};
@@ -46,6 +49,11 @@ impl Responder for WeatherForcast {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
+struct SevenDayWeatherForcastRequest {
+    location: String,
+}
+
 #[derive(Debug, Deserialize)]
 struct WeatherForcastRequest {
     lat: f64,
@@ -59,14 +67,7 @@ pub struct LocationResult {
     name: String,
     latitude: f64,
     longitude: f64,
-    elevation: f32,
-    feature_code: String,
-    country_code: String,
-    admin1_id: u32,
     timezone: String,
-    country_id: u32,
-    country: String,
-    admin1: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -74,16 +75,35 @@ pub struct LocationResponse {
     results: Vec<LocationResult>,
 }
 
-pub async fn get_lat_long_for_location(location: String) -> (f64, f64) {
+#[get("/weather/seven-day-weather-forcast")]
+pub async fn seven_day_weather_forcast(
+    req: web::Query<SevenDayWeatherForcastRequest>,
+) -> Result<impl Responder> {
+    let (lat, long, timezone) = get_lat_long_for_location(req.location.clone()).await;
+
+    let response = get_seven_day_forcast(lat, long, &timezone).await;
+
+    Ok(web::Json(response))
+}
+
+pub async fn get_lat_long_for_location(location: String) -> (f64, f64, String) {
     let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={location}&count=10&language=en&format=json");
-    let response: LocationResponse = reqwest::get(url)
+    let response = reqwest::get(url)
         .await
         .unwrap()
         .json::<LocationResponse>()
         .await
         .unwrap();
 
-    (response.results[0].latitude, response.results[0].longitude)
+    if response.results.len() < 1 {
+        panic!("error");
+    }
+
+    (
+        response.results[0].latitude,
+        response.results[0].longitude,
+        response.results[0].timezone.clone(),
+    )
 }
 
 pub async fn get_seven_day_forcast(lat: f64, long: f64, timezone: &String) -> WeatherForcast {

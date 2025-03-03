@@ -1,7 +1,7 @@
 use actix_web::{App, HttpServer};
 use health::health_check;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use weather::weather_forcast;
+use weather::{seven_day_weather_forcast, weather_forcast};
 
 mod health;
 mod weather;
@@ -19,10 +19,15 @@ async fn main() -> std::io::Result<()> {
         Command::repl(bot, answer).await;
     });
 
-    HttpServer::new(|| App::new().service(health_check).service(weather_forcast))
-        .bind(("0.0.0.0", 4000))?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(health_check)
+            .service(weather_forcast)
+            .service(seven_day_weather_forcast)
+    })
+    .bind(("0.0.0.0", 4000))?
+    .run()
+    .await
 }
 
 #[derive(BotCommands, Clone)]
@@ -33,12 +38,8 @@ async fn main() -> std::io::Result<()> {
 enum Command {
     #[command(description = "display this text.")]
     Help,
-    #[command(description = "handle a username.")]
-    Username(String),
     #[command(description = "sends a weekly forcast.")]
     Forcast(String),
-    #[command(description = "handle a username and an age.", parse_with = "split")]
-    UsernameAndAge { username: String, age: u8 },
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
@@ -47,26 +48,10 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
             bot.send_message(msg.chat.id, Command::descriptions().to_string())
                 .await?
         }
-        Command::Username(username) => {
-            bot.send_message(msg.chat.id, format!("Your username is @{username}."))
-                .await?
-        }
-        Command::UsernameAndAge { username, age } => {
-            bot.send_message(
-                msg.chat.id,
-                format!("Your username is @{username} and age is {age}."),
-            )
-            .await?
-        }
         Command::Forcast(location) => {
             let location = weather::get_lat_long_for_location(location).await;
 
-            let forcast = weather::get_seven_day_forcast(
-                location.0,
-                location.1,
-                &"Australia/Sydney".to_owned(),
-            )
-            .await;
+            let forcast = weather::get_seven_day_forcast(location.0, location.1, &location.2).await;
 
             bot.send_message(msg.chat.id, weather::format_weekly_forcast(&forcast))
                 .await?
