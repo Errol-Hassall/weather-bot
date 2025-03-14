@@ -1,10 +1,11 @@
 use actix_web::{App, HttpServer};
 use health::health_check;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use weather::{seven_day_weather_forcast, weather_forcast};
+use weather::{seven_day_weather_forecast, weather_forecast};
 
 mod health;
 mod weather;
+mod telegram;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -22,8 +23,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(health_check)
-            .service(weather_forcast)
-            .service(seven_day_weather_forcast)
+            .service(weather_forecast)
+            .service(seven_day_weather_forecast)
     })
     .bind(("0.0.0.0", 4000))?
     .run()
@@ -38,8 +39,8 @@ async fn main() -> std::io::Result<()> {
 enum Command {
     #[command(description = "display this text.")]
     Help,
-    #[command(description = "sends a weekly forcast.")]
-    Forcast(String),
+    #[command(description = "sends a weekly forecast.")]
+    Forecast(String),
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
@@ -48,12 +49,12 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
             bot.send_message(msg.chat.id, Command::descriptions().to_string())
                 .await?
         }
-        Command::Forcast(location) => {
+        Command::Forecast(location) => {
             let location = weather::get_lat_long_for_location(location).await;
 
-            let forcast = weather::get_seven_day_forcast(location.0, location.1, &location.2).await;
+            let forecast = weather::get_seven_day_forecast(location.0, location.1, &location.2).await.unwrap();
 
-            bot.send_message(msg.chat.id, weather::format_weekly_forcast(&forcast))
+            bot.send_message(msg.chat.id, weather::format_weekly_forecast(&forecast))
                 .await?
         }
     };
