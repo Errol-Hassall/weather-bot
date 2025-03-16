@@ -1,14 +1,11 @@
 use actix_web::{
-    body::BoxBody,
-    http::header::ContentType,
-    web::{self},
-    HttpRequest, HttpResponse, Responder,
+    web::{self}
+    , Responder,
 };
 
-use serde::{Deserialize, Serialize};
 use crate::error::Result;
-use crate::telegram::{send_bot_message_forecast};
-use crate::controllers::weather_controller::{LocationResponse, WeatherForecast};
+use crate::telegram::send_bot_message_forecast;
+use crate::types::weather_types::{LocationResponse, RainPrediction, WeatherForecast};
 
 pub async fn get_lat_long_for_location(location: String) -> (f64, f64, String) {
     let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={location}&count=10&language=en&format=json");
@@ -71,35 +68,6 @@ pub async fn get_weather(lat: f64, long: f64, timezone: &String) -> Result<impl 
 
     Ok(web::Json(response))
 }
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Hourly {
-    time: Vec<String>,
-    pub(crate) precipitation: Vec<f64>,
-    pub(crate) precipitation_probability: Vec<f64>,
-    pub(crate) rain: Vec<f64>,
-    pub(crate) showers: Vec<f64>,
-}
-
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct RainPrediction {
-    pub(crate) hourly: Hourly,
-}
-
-impl Responder for RainPrediction {
-    type Body = BoxBody;
-
-    fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-        let body = serde_json::to_string(&self).unwrap();
-
-        // Create response and set content type
-        HttpResponse::Ok()
-            .content_type(ContentType::json())
-            .body(body)
-    }
-}
-
 
 pub async fn get_rain_prediction(lat: f64, long: f64, timezone: &String) -> Result<RainPrediction> {
     let url = format!("https://api.open-meteo.com/v1/forecast?timezone={timezone}&latitude={lat}&longitude={long}&hourly=precipitation,precipitation_probability,rain,showers&forecast_days=1");

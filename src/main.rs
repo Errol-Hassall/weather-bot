@@ -8,6 +8,7 @@ mod weather;
 mod telegram;
 mod error;
 mod controllers;
+mod types;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
