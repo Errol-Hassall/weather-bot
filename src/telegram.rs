@@ -20,3 +20,14 @@ pub async fn send_bot_message_forecast(weather: &WeatherForecast) -> Result<telo
 
     Ok(response)
 }
+
+pub async fn send_bot_message(message: &str) -> Result<teloxide::prelude::Message, Box<dyn Error>> {
+    let channel_id = dotenv::var("CHANNEL_ID")?;
+    let bot = Bot::from_env();
+
+    let response = bot
+        .send_message(String::from(channel_id), message)
+        .await?;
+
+    Ok(response)
+}

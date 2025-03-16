@@ -17,5 +17,5 @@ This bot will send a message via telagram when the url is hit that gives you a f
 - [x] Send a message on telegram and get a response
 - [x] Send a message on telegram to return a forecast for the week
 - [ ] Separate the controllers and the service code
-- [ ] Better error handling
+- [x] Better error handling
 - [ ] Rain prediction for the day

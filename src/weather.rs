@@ -3,11 +3,12 @@ use actix_web::{
     get,
     http::header::ContentType,
     web::{self},
-    HttpRequest, HttpResponse, Responder, Result,
+    HttpRequest, HttpResponse, Responder,
 };
 
 use serde::{Deserialize, Serialize};
-use crate::telegram::send_bot_message_forecast;
+use crate::error::Result;
+use crate::telegram::{send_bot_message, send_bot_message_forecast};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Daily {
@@ -50,7 +51,7 @@ impl Responder for WeatherForecast {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-struct SevenDayWeatherForecastRequest {
+struct LocationWeatherRequest {
     location: String,
 }
 
@@ -77,7 +78,7 @@ pub struct LocationResponse {
 
 #[get("/weather/seven-day-weather-forecast")]
 pub async fn seven_day_weather_forecast(
-    req: web::Query<SevenDayWeatherForecastRequest>,
+    req: web::Query<LocationWeatherRequest>,
 ) -> Result<impl Responder> {
     let (lat, long, timezone) = get_lat_long_for_location(req.location.clone()).await;
 
@@ -156,4 +157,61 @@ async fn get_weather(lat: f64, long: f64, timezone: &String) -> Result<impl Resp
     Ok(web::Json(response))
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Hourly {
+    time: Vec<String>,
+    pub(crate) precipitation: Vec<f64>,
+    pub(crate) precipitation_probability: Vec<f64>,
+    pub(crate) rain: Vec<f64>,
+    pub(crate) showers: Vec<f64>,
+}
+
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct RainPrediction {
+    pub(crate) hourly: Hourly,
+}
+
+impl Responder for RainPrediction {
+    type Body = BoxBody;
+
+    fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
+        let body = serde_json::to_string(&self).unwrap();
+
+        // Create response and set content type
+        HttpResponse::Ok()
+            .content_type(ContentType::json())
+            .body(body)
+    }
+}
+
+#[get("/weather/rain-prediction")]
+pub async fn location_rain_prediction(
+    req: web::Query<LocationWeatherRequest>,
+) -> Result<impl Responder> {
+    let (lat, long, timezone) = get_lat_long_for_location(req.location.clone()).await;
+
+    let response = get_rain_prediction(lat, long, &timezone).await?;
+
+    let _ = send_bot_message(&format_rain_prediction(&response)).await;
+
+    Ok(response)
+}
+
+pub async fn get_rain_prediction(lat: f64, long: f64, timezone: &String) -> Result<RainPrediction> {
+    let url = format!("https://api.open-meteo.com/v1/forecast?timezone={timezone}&latitude={lat}&longitude={long}&hourly=precipitation,precipitation_probability,rain,showers&forecast_days=1");
+
+    let response: RainPrediction = reqwest::get(url)
+        .await.unwrap()
+        .json::<RainPrediction>()
+        .await.unwrap();
+
+    Ok(response)
+}
+
+pub fn format_rain_prediction(prediction: &RainPrediction) -> String {
+    let precipitation_total = prediction.hourly.precipitation.iter().sum::<f64>().round().to_string();
+
+   format!("{precipitation_total}mm of rain is expected today")
+}
 
