@@ -1,7 +1,7 @@
 use std::error::Error;
 use teloxide::Bot;
 use teloxide::prelude::Requester;
-use crate::weather::WeatherForecast;
+use crate::controllers::weather_controller::WeatherForecast;
 
 pub async fn send_bot_message_forecast(weather: &WeatherForecast) -> Result<teloxide::prelude::Message, Box<dyn Error>> {
     let channel_id = dotenv::var("CHANNEL_ID")?;

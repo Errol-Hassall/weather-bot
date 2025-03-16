@@ -1,13 +1,13 @@
 use actix_web::{App, HttpServer};
 use health::health_check;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use weather::{seven_day_weather_forecast, weather_forecast};
-use crate::weather::location_rain_prediction;
+use crate::controllers::weather_controller::{location_rain_prediction, seven_day_weather_forecast, weather_forecast};
 
 mod health;
 mod weather;
 mod telegram;
 mod error;
+mod controllers;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
