@@ -202,9 +202,9 @@ pub async fn get_rain_prediction(lat: f64, long: f64, timezone: &String) -> Resu
     let url = format!("https://api.open-meteo.com/v1/forecast?timezone={timezone}&latitude={lat}&longitude={long}&hourly=precipitation,precipitation_probability,rain,showers&forecast_days=1");
 
     let response: RainPrediction = reqwest::get(url)
-        .await.unwrap()
+        .await?
         .json::<RainPrediction>()
-        .await.unwrap();
+        .await?;
 
     Ok(response)
 }
