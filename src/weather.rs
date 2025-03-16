@@ -16,7 +16,7 @@ pub async fn get_lat_long_for_location(location: String) -> (f64, f64, String) {
         .await
         .unwrap();
 
-    if response.results.len() < 1 {
+    if response.results.is_empty() {
         panic!("error");
     }
 
