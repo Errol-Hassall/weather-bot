@@ -1,38 +1,55 @@
+use crate::error::Result;
+use crate::telegram::send_bot_message_forecast;
+use crate::types::weather_types::{LocationResponse, RainPrediction, WeatherForecast};
 use actix_web::{
     web::{self}
     , Responder,
 };
+use anyhow::Context;
+use reqwest::Error as ReqwestError;
 
-use crate::error::Result;
-use crate::telegram::send_bot_message_forecast;
-use crate::types::weather_types::{LocationResponse, RainPrediction, WeatherForecast};
+#[derive(Debug, thiserror::Error)]
+pub enum WeatherApiErrors {
+    #[error("Failed to send request: {0}")]
+    RequestError(#[from] ReqwestError),
 
-pub async fn get_lat_long_for_location(location: String) -> (f64, f64, String) {
+    #[error("Failed to parse JSON response: {0}")]
+    JsonParseError(String),
+
+    #[error("Invalid latitude or longitude")]
+    InvalidCoordinates,
+
+    #[error("No coordinates found")]
+    NoCoordinates,
+}
+
+
+pub async fn get_lat_long_for_location(location: String) -> Result<(f64, f64, String)> {
     let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={location}&count=10&language=en&format=json");
     let response = reqwest::get(url)
-        .await
-        .unwrap()
-        .json::<LocationResponse>()
-        .await
-        .unwrap();
+        .await.map_err(WeatherApiErrors::RequestError).context("Network request error")?
+        .json::<LocationResponse>().await.map_err(|e| WeatherApiErrors::JsonParseError(e.to_string())).context("JSON parse error")?;
 
     if response.results.is_empty() {
-        panic!("error");
+        return Err(WeatherApiErrors::NoCoordinates.into());
     }
 
-    (
+    Ok((
         response.results[0].latitude,
         response.results[0].longitude,
         response.results[0].timezone.clone(),
-    )
+    ))
 }
 
 pub async fn get_seven_day_forecast(lat: f64, long: f64, timezone: &String) -> Result<WeatherForecast> {
+    if !((-90.0..=90.0).contains(&lat) && (-180.0..=180.0).contains(&long)) {
+        return Err(WeatherApiErrors::InvalidCoordinates.into());
+    }
+
     let url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone={timezone}&forecast_days=7");
     let response: WeatherForecast = reqwest::get(url)
-        .await.unwrap()
-        .json::<WeatherForecast>()
-        .await.unwrap();
+        .await.map_err(WeatherApiErrors::RequestError).context("Network request error")?
+        .json::<WeatherForecast>().await.map_err(|e| WeatherApiErrors::JsonParseError(e.to_string())).context("JSON parse error")?;
 
     Ok(response)
 }

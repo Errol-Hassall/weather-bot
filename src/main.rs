@@ -1,14 +1,16 @@
+use crate::controllers::weather_controller::{
+    location_rain_prediction, seven_day_weather_forecast, weather_forecast,
+};
 use actix_web::{App, HttpServer};
 use health::health_check;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use crate::controllers::weather_controller::{location_rain_prediction, seven_day_weather_forecast, weather_forecast};
 
-mod health;
-mod weather;
-mod telegram;
-mod error;
 mod controllers;
+mod error;
+mod health;
+mod telegram;
 mod types;
+mod weather;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -56,17 +58,21 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
                 .await?
         }
         Command::Forecast(location) => {
-            let location = weather::get_lat_long_for_location(location).await;
+            let location = weather::get_lat_long_for_location(location).await.unwrap();
 
-            let forecast = weather::get_seven_day_forecast(location.0, location.1, &location.2).await.unwrap();
+            let forecast = weather::get_seven_day_forecast(location.0, location.1, &location.2)
+                .await
+                .unwrap();
 
             bot.send_message(msg.chat.id, weather::format_weekly_forecast(&forecast))
                 .await?
         }
         Command::Rain(location) => {
-            let location = weather::get_lat_long_for_location(location).await;
+            let location = weather::get_lat_long_for_location(location).await.unwrap();
 
-            let forecast = weather::get_rain_prediction(location.0, location.1, &location.2).await.unwrap();
+            let forecast = weather::get_rain_prediction(location.0, location.1, &location.2)
+                .await
+                .unwrap();
 
             bot.send_message(msg.chat.id, weather::format_rain_prediction(&forecast))
                 .await?
